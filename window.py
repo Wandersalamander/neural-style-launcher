@@ -7,6 +7,7 @@ from natsort import natsorted
 
 
 def only_name(path):
+    '''Removes path and file ending from file'''
     path = path.replace("\\", "/")
     name = path.split("/")[-1]
     name = name[:name.index(".")]
@@ -14,6 +15,7 @@ def only_name(path):
 
 
 def resized_path(file):
+    '''Makes resized copy of image and returns location'''
     file_old = str(file)
     if file.count(".") != 1:
         raise Exception("File has more than one points:" + str(file))
@@ -25,18 +27,25 @@ def resized_path(file):
 
 
 def run_nstf(content, style, output, checkpoint_output):
+    '''Runs neural style transfer
+
+    Notes
+    -----
+    if output file already exists, its renamed to *_old.*
+    and used as initial guess
+    '''
     content = resized_path(content)
     style = resized_path(style)
     output = str(output)
     commands = [
-        "/home/simon/anaconda3/bin/python",
-        "/home/simon/Git/neural-style/neural_style.py",
+        PYTHONPATH,
+        NEURAL_PATH + "neural_style.py",
         "--content", content,
         "--styles", style,
         "--output", output,
         "--checkpoint-output", str(checkpoint_output),
         "--checkpoint-iterations", "100",
-        "--network", neral_path + "imagenet-vgg-verydeep-19.mat"
+        "--network", NEURAL_PATH + "imagenet-vgg-verydeep-19.mat"
     ]
     if os.path.isfile(output):
         assert output.count(".") == 1
@@ -47,16 +56,14 @@ def run_nstf(content, style, output, checkpoint_output):
     for cmd in commands:
         print(cmd)
     print()
-    # print("clall")
-    print(subprocess.check_output(commands, env={"PATH": neral_path}))
+    print(subprocess.check_output(commands, env={"PATH": NEURAL_PATH}))
     os.remove(content)
     os.remove(style)
-    # print("clalled")
 
-
+PYTHONPATH = "/home/simon/anaconda3/bin/python"
+NEURAL_PATH = "/home/simon/Git/neural-style/"
 SIZE = 600  # resolution of images
-path = "/home/simon/Desktop/nstf/"
-neral_path = "/home/simon/Git/neural-style/"
+path = str(os.getcwd()) + "/"
 dir_content = path + "content/"
 dir_styles = path + "styles/"
 
@@ -67,11 +74,13 @@ frame = Frame(window)
 
 listbox_content = Listbox(frame, exportselection=0)
 for name in natsorted(listdir(dir_content)):
-    listbox_content.insert('end', name)
+    if name != ".keep":
+        listbox_content.insert('end', name)
 
 listbox_style = Listbox(frame, exportselection=0)
 for name in natsorted(listdir(dir_styles)):
-    listbox_style.insert('end', name)
+    if name != ".keep":
+        listbox_style.insert('end', name)
 
 
 def dialog():
